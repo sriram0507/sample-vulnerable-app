@@ -14,19 +14,19 @@ provider "aws" {
 
 resource "aws_s3_bucket" "app_bucket" {
   bucket = "sample-app-terraform-bucket-12345"
-  acl    = "private"  # Changed from "public-read" to "private" for better security
+  acl    = "public-read"                        # Issue 1: public-read ACL
 }
 
 resource "aws_iam_policy" "app_policy" {
-  name        = "app-restricted-access"  # Changed name to reflect restricted access
-  description = "Policy used by instances with least privilege principle"
+  name        = "app-full-access"
+  description = "Policy used by instances"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = [
+        Effect   = "Allow"
+        Action   = [
           "s3:GetObject",
           "s3:PutObject",
           "s3:ListBucket"
@@ -40,21 +40,14 @@ resource "aws_iam_policy" "app_policy" {
   })
 }
 
-resource "aws_security_group" "restricted_sg" {
-  name        = "restricted-sg"
-  description = "Security group with restricted access"
+resource "aws_security_group" "open_sg" {
+  name        = "open-sg"
+  description = "Security group with wide open access"
 
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/8"]  # Restrict to internal network
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/8"]  # Restrict to internal network
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]                 # Issue 4: all ports open to the world
   }
 }
